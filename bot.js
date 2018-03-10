@@ -30,11 +30,11 @@ client.on('ready', () => {
     // Set 'Playing Game' in discord
     client.user.setGame('Albion Online'); // broken due to discord API changes
 
-    //fetchKills();
+    fetchKills();
 
     // Fetch kills every 30s
     var timer = setInterval(function() {
-        //fetchKills();
+        fetchKills();
     }, 30000);
 });
 
@@ -145,7 +145,7 @@ client.on('message', message => {
                 uri: 'https://gameinfo.albiononline.com/api/gameinfo/events/' + args[0]
             }, function (error, response, body) {
                 if (!error && response.statusCode === 200) {
-                    //postKill(body, message.channel.id);
+                    postKill(body, message.channel.id);
                 } else {
                     console.log('Error: ', error); // Log the error
                 }
