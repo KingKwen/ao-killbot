@@ -38,6 +38,59 @@ client.on('ready', () => {
     }, 30000);
 });
 
+var lastRecordedKill = -1;
+
+/**
+ * Fetch recent kills from the Gameinfo API
+ * @param  {Number} limit  [max kills to get]
+ * @param  {Number} offset [offset for first kill]
+ * @return {json} [json array of events]
+ */
+function fetchKills(limit = 51, offset = 0) {
+    request({
+        uri: 'https://gameinfo.albiononline.com/api/gameinfo/events?limit='+limit+'&offset='+offset,
+        json: true
+    }, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+            parseKills(body);
+        } else {
+            console.log('Error: ', error); // Log the error
+        }
+    });
+}
+
+/**
+ * Parse returned JSON from Gameinfo to
+ * find alliance members on the killboard
+ * @param  {json} events
+ */
+function parseKills(events) {
+    var count = 0;
+    var breaker = lastRecordedKill;
+
+    events.some(function(kill, index) {
+        // Save the most recent kill for tracking
+        if (index == 0) {
+            lastRecordedKill = kill.EventId;
+        }
+
+        // Don't process data for the breaker KILL
+        if (kill.EventId != breaker)
+            // Alliance KILL
+            if (kill.Killer.AllianceName.toLowerCase() == '<NONE>'.toLowerCase() || kill.Victim.AllianceName.toLowerCase() == '<NONE>'.toLowerCase()) {
+                postKill(kill);
+            } else if (kill.Killer.GuildName.toLowerCase() == 'GeniuS'.toLowerCase() || kill.Victim.GuildName.toLowerCase() == 'GeniuS'.toLowerCase()) {
+                postKill(kill);
+            } else {
+                count++;
+            }
+
+        return kill.EventId == breaker;
+    });
+
+    // console.log('- Skipped ' + count + ' kills');
+}
+
 function postKill(kill, channel = '421583954861228042') {
     //quick fix to not post kills with 0 fame (like arena kills after the patch)
     if (kill.TotalVictimKillFame == 0){
