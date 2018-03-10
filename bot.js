@@ -38,6 +38,93 @@ client.on('ready', () => {
     }, 30000);
 });
 
+function postKill(kill, channel = '421583954861228042') {
+    //quick fix to not post kills with 0 fame (like arena kills after the patch)
+    if (kill.TotalVictimKillFame == 0){
+         return;
+    }
+
+    var victory = false;
+    if (kill.Killer.AllianceName.toLowerCase() == '<NONE>'.toLowerCase() || kill.Killer.GuildName.toLowerCase() == 'GeniuS'.toLowerCase()) {
+        victory = true;
+    }
+
+    var assistedBy = "";
+    if (kill.numberOfParticipants == 1) {
+        var soloKill = [
+            'All on their own',
+            'Without assitance from anyone',
+            'All by himself',
+            'SOLO KILL'
+        ];
+        assistedBy = soloKill[Math.floor(Math.random() * soloKill.length)];
+    } else {
+        var assists = [];
+        kill.Participants.forEach(function(participant) {
+            if (participant.Name != kill.Killer.Name) {
+                assists.push(participant.Name);
+            }
+        })
+        assistedBy = "Assisted By: " + assists.join(', ');
+    }
+
+    itemCount = 0;
+    kill.Victim.Inventory.forEach(function(inventory) {
+        if (inventory !== null) {
+            itemCount++;
+        }
+    });
+
+    var itemsDestroyedText = "";
+    if (itemCount > 0) {
+        itemsDestroyedText = " destroying " + itemCount + " items";
+    }
+
+    var embed = {
+        color: victory ? 0x008000 : 0x800000,
+        author: {
+            name: kill.Killer.Name + " killed " + kill.Victim.Name,
+            icon_url: victory ? 'https://i.imgur.com/CeqX0CY.png' : 'https://albiononline.com/assets/images/killboard/kill__date.png',
+            url: 'https://albiononline.com/en/killboard/kill/'+kill.EventId
+        },
+        title: assistedBy + itemsDestroyedText,
+        description: 'Gaining ' + kill.TotalVictimKillFame + ' fame',
+        thumbnail: {
+            url: (kill.Killer.Equipment.MainHand.Type ? 'https://gameinfo.albiononline.com/api/gameinfo/items/' + kill.Killer.Equipment.MainHand.Type + '.png' : "https://albiononline.com/assets/images/killboard/kill__date.png")
+        },
+        timestamp: kill.TimeStamp,
+        fields: [
+            {
+                name: "Killer Guild",
+                value: (kill.Killer.AllianceName ? "["+kill.Killer.AllianceName+"] " : '') + (kill.Killer.GuildName ? kill.Killer.GuildName : '<none>'),
+                inline: true
+            },
+            {
+                name: "Victim Guild",
+                value: (kill.Victim.AllianceName ? "["+kill.Victim.AllianceName+"] " : '') + (kill.Victim.GuildName ? kill.Victim.GuildName : '<none>'),
+                inline: true
+            },
+            {
+                name: "Killer IP",
+                value: kill.Killer.AverageItemPower.toFixed(2),
+                inline: true
+            },
+            {
+                name: "Victim IP",
+                value: kill.Victim.AverageItemPower.toFixed(2),
+                inline: true
+            },
+        ],
+        footer: {
+            text: "Kill #" + kill.EventId
+        }
+    };
+
+    console.log(embed);
+
+    client.channels.get(channel).send({embed: embed});
+}
+
 /**
  * On receive message
  */
