@@ -2,7 +2,6 @@ const config = require('./config.json');
 
 // Require modules
 const Discord = require('discord.js');
-const request = require('request');
 const client = new Discord.Client();
 
 client.on('ready', () => {
