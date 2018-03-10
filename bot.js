@@ -75,7 +75,7 @@ function parseKills(events) {
     // console.log('- Skipped ' + count + ' kills');
 }
 
-function postKill(kill, channel = '421583954861228042') {
+function postKill(kill, channel = '421975081258975242') {
     //quick fix to not post kills with 0 fame (like arena kills after the patch)
     if (kill.TotalVictimKillFame == 0){
          return;
@@ -191,7 +191,7 @@ client.on('message', message => {
 
         // [ADMIN] - clear config.botChannel messages
         else if (command === 'kbclear') {
-            if (''.includes(message.author.id) && message.channel.id == '421583954861228042') {
+            if (''.includes(message.author.id) && message.channel.id == '421975081258975242') {
                 message.channel.send('Clearing Killboard').then(msg => {
                     msg.channel.fetchMessages().then(messages => {
                         message.channel.bulkDelete(messages);
