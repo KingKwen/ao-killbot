@@ -1,1 +1,1 @@
-worker: node ao-killboard.js
+worker: node bot.js
