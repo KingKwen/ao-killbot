@@ -3,22 +3,6 @@ const client = new Discord.Client();
 
 const request = require('request');
 
-client.on('ready', () => {
-    console.log('I am ready!');
-});
-
-client.on('message', message => {
-    if (message.content === 'ping') {
-    	message.channel.send('PONG!');
-  	}
-});
-
-client.on('message', message => {
-    if (message.content === 'bing') {
-    	message.reply('BONG!');
-  	}
-});
-
 /**
  * Wait until ready and logged in
  * If we do not wait for the ready event
