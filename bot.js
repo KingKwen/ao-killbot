@@ -137,7 +137,7 @@ function postKill(kill, channel = '421975081258975242') {
 
     var itemsDestroyedText = "";
     if (itemCount > 0) {
-        itemsDestroyedText = " destroying " + itemCount + " items";
+        itemsDestroyedText = " (" + itemCount + " objets détruits)";
     }
 
     var embed = {
