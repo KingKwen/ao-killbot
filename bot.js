@@ -3,6 +3,8 @@ const client = new Discord.Client();
 
 const request = require('request');
 
+var killHistory = [];
+
 /**
  * Wait until ready and logged in
  * If we do not wait for the ready event
@@ -19,8 +21,20 @@ client.on('ready', () => {
     // Fetch kills every 30s
     var timer = setInterval(function() {
         fetchKills();
+        purgeKillHistory();
     }, 30000);
 });
+
+function purgeKillHistory() {
+    if (killHistory.length > 25) {
+        for (j=0; j < 5; j++) {
+            for (i=0; i < killHistory.length; i++) {
+                killHistory[i] = killHistory[i+1];
+                killHistory.splice(killHistory.length-1, 1);
+            }
+        }
+    }
+}
 
 var lastRecordedKill = -1;
 
@@ -64,7 +78,16 @@ function parseKills(events) {
             if (kill.Killer.AllianceName.toLowerCase() == '<NONE>'.toLowerCase() || kill.Victim.AllianceName.toLowerCase() == '<NONE>'.toLowerCase()) {
                 postKill(kill);
             } else if (kill.Killer.GuildName.toLowerCase() == 'GeniuS'.toLowerCase() || kill.Victim.GuildName.toLowerCase() == 'GeniuS'.toLowerCase()) {
-                postKill(kill);
+                var newKill = true;
+                for (i = 0; i < killHistory.length; i++) {
+                    if (killHistory[i] == kill.EventId) {
+                        newKill = false;
+                        break;
+                    }
+                }
+                if (newKill) {
+                    postKill(kill);
+                }
             } else {
                 count++;
             }
@@ -89,10 +112,10 @@ function postKill(kill, channel = '421975081258975242') {
     var assistedBy = "";
     if (kill.numberOfParticipants == 1) {
         var soloKill = [
-            'All on their own',
-            'Without assitance from anyone',
-            'All by himself',
-            'SOLO KILL'
+            'Tout seul comme un grand',
+            'Sans l\'aide de personne',
+            'Pas besoin d\'aide',
+            'En solo ;)'
         ];
         assistedBy = soloKill[Math.floor(Math.random() * soloKill.length)];
     } else {
@@ -102,7 +125,7 @@ function postKill(kill, channel = '421975081258975242') {
                 assists.push(participant.Name);
             }
         })
-        assistedBy = "Assisted By: " + assists.join(', ');
+        assistedBy = "Avec l'aide de: " + assists.join(', ');
     }
 
     itemCount = 0;
@@ -120,40 +143,40 @@ function postKill(kill, channel = '421975081258975242') {
     var embed = {
         color: victory ? 0x008000 : 0x800000,
         author: {
-            name: kill.Killer.Name + " killed " + kill.Victim.Name,
+            name: victory ? kill.Killer.Name + " a tué " + kill.Victim.Name : kill.Victim.Name + " s'est fait tué par " + kill.Killer.Name,
             icon_url: victory ? 'https://i.imgur.com/CeqX0CY.png' : 'https://albiononline.com/assets/images/killboard/kill__date.png',
             url: 'https://albiononline.com/en/killboard/kill/'+kill.EventId
         },
         title: assistedBy + itemsDestroyedText,
-        description: 'Gaining ' + kill.TotalVictimKillFame + ' fame',
+        description: 'Gain de ' + kill.TotalVictimKillFame + ' fame',
         thumbnail: {
             url: (kill.Killer.Equipment.MainHand.Type ? 'https://gameinfo.albiononline.com/api/gameinfo/items/' + kill.Killer.Equipment.MainHand.Type + '.png' : "https://albiononline.com/assets/images/killboard/kill__date.png")
         },
         timestamp: kill.TimeStamp,
         fields: [
             {
-                name: "Killer Guild",
-                value: (kill.Killer.AllianceName ? "["+kill.Killer.AllianceName+"] " : '') + (kill.Killer.GuildName ? kill.Killer.GuildName : '<none>'),
+                name: "Guilde",
+                value: victory ? (kill.Killer.AllianceName ? "["+kill.Killer.AllianceName+"] " : '') + (kill.Killer.GuildName ? kill.Killer.GuildName : '<none>') : (kill.Victim.AllianceName ? "["+kill.Victim.AllianceName+"] " : '') + (kill.Victim.GuildName ? kill.Victim.GuildName : '<none>'),
                 inline: true
             },
             {
-                name: "Victim Guild",
-                value: (kill.Victim.AllianceName ? "["+kill.Victim.AllianceName+"] " : '') + (kill.Victim.GuildName ? kill.Victim.GuildName : '<none>'),
+                name: "Guilde",
+                value: victory ? (kill.Victim.AllianceName ? "["+kill.Victim.AllianceName+"] " : '') + (kill.Victim.GuildName ? kill.Victim.GuildName : '<none>'): (kill.Killer.AllianceName ? "["+kill.Killer.AllianceName+"] " : '') + (kill.Killer.GuildName ? kill.Killer.GuildName : '<none>'),
                 inline: true
             },
             {
-                name: "Killer IP",
-                value: kill.Killer.AverageItemPower.toFixed(2),
+                name: "Valeur d'objets",
+                value: victory ? kill.Killer.AverageItemPower.toFixed(2) : kill.Victim.AverageItemPower.toFixed(2),
                 inline: true
             },
             {
-                name: "Victim IP",
-                value: kill.Victim.AverageItemPower.toFixed(2),
+                name: "Valeur d'objets",
+                value: victory ? kill.Victim.AverageItemPower.toFixed(2) : kill.Killer.AverageItemPower.toFixed(2),
                 inline: true
             },
         ],
         footer: {
-            text: "Kill #" + kill.EventId
+            text: "ID #" + kill.EventId
         }
     };
 
@@ -172,8 +195,8 @@ client.on('message', message => {
         var command = args.shift().toLowerCase();
 
         // Test Command - !ping
-        if (command === 'ping') {
-            message.reply('pong');
+        if (command === 'bonjour') {
+            message.reply('Bonjour, je suis prêt à afficher vos exploits !');
         }
 
         else if (command === 'kbinfo') {
